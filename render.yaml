@@ -1,0 +1,34 @@
+# Render Blueprint — deploys Vibeship as a free Node web service with managed
+# TLS at https://<service-name>.onrender.com.
+#
+# Use it via Render Dashboard → New → Blueprint (point at this repo), or the
+# "Deploy to Render" button in the README. Values marked `sync: false` are
+# secrets: Render prompts for them on creation and they are never committed.
+services:
+  - type: web
+    name: vibeship
+    runtime: node
+    plan: free
+    region: oregon
+    # `npm ci` installs exactly what package-lock.json pins; `next start` binds
+    # to the $PORT Render injects.
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    autoDeploy: true
+    healthCheckPath: /login
+    envVars:
+      # Inlined into the client bundle at build time — must be set before build.
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      # Server-only secrets.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: APP_ENCRYPTION_KEY
+        sync: false
+      # The public origin. Leave unset on the first deploy, then set it to the
+      # service's https://<name>.onrender.com URL and redeploy — this enables
+      # full public publish links and custom-domain host routing.
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
